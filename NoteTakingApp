@@ -1,0 +1,114 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.*;
+import java.nio.file.Files;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
+public class NoteTakingApp extends JFrame {
+
+    // Create text area to write the notes
+    JTextArea noteArea = new JTextArea();
+    // Create list model for notes
+    DefaultListModel<String> listModel = new DefaultListModel<>();
+    // Create list to show the notes
+    JList<String> noteList = new JList<>(listModel);
+
+    // File chooser to add file or image
+    JFileChooser fileChooser = new JFileChooser();
+
+    public NoteTakingApp() {
+        // Set title
+        setTitle("IdeaVault");
+        // Set close operation
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        // Set layout
+        setLayout(new BorderLayout());
+
+        // Panel for buttons
+        JPanel buttonPanel = new JPanel();
+
+        // Button to add note
+        JButton addNoteButton = new JButton("Add Note");
+        addNoteButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Add note text to list
+                listModel.addElement(noteArea.getText());
+                // Clear note area
+                noteArea.setText("");
+            }
+        });
+        buttonPanel.add(addNoteButton);
+
+        // Button to delete note
+        JButton deleteNoteButton = new JButton("Delete Note");
+        deleteNoteButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Delete selected note
+                listModel.remove(noteList.getSelectedIndex());
+            }
+        });
+        buttonPanel.add(deleteNoteButton);
+
+        // Button to save notes into file
+        JButton saveButton = new JButton("Save Notes");
+        saveButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    // Save notes into a text file
+                    PrintWriter writer = new PrintWriter("notes.txt", "UTF-8");
+                    for (int i = 0; i < listModel.getSize(); i++) {
+                        writer.println(listModel.getElementAt(i));
+                    }
+                    writer.close();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+        buttonPanel.add(saveButton);
+
+        // Button to add an image or file
+        JButton attachButton = new JButton("Attach File/Image");
+        attachButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Show open dialog
+                int result = fileChooser.showOpenDialog(null);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    // Get selected file
+                    File selectedFile = fileChooser.getSelectedFile();
+                    try {
+                        // Read file bytes
+                        byte[] fileBytes = Files.readAllBytes(selectedFile.toPath());
+                        // Encode file bytes to base64
+                        String fileBase64 = java.util.Base64.getEncoder().encodeToString(fileBytes);
+                        // Add fileBase64 to the note
+                        noteArea.append("\n" + fileBase64);
+                    } catch (IOException ioException) {
+                        ioException.printStackTrace();
+                    }
+                }
+            }
+        });
+        buttonPanel.add(attachButton);
+
+        // Add components to frame
+        add(buttonPanel, BorderLayout.NORTH);
+        add(new JScrollPane(noteArea), BorderLayout.CENTER);
+        add(new JScrollPane(noteList), BorderLayout.EAST);
+
+        // Set size
+        setSize(600, 400);
+        // Show frame
+        setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        new NoteTakingApp();
+    }
+}
